@@ -1,0 +1,10 @@
+---
+
+zabbix_packages: [ zabbix-server-pgsql, zabbix-web-pgsql, zabbix-agent ]
+zabbix_services: [ zabbix-server, zabbix-agent, httpd ]
+
+zabbix_history_storage_types: ['uint', 'dbl', 'str', 'text']
+zabbix_history_storage_type: clickhouse
+
+zabbix_include: /etc/zabbix/zabbix_server.d
+

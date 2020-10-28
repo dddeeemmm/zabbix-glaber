@@ -1,0 +1,18 @@
+---
+
+- block:
+
+    - include: asserts.yml
+    - include: install.yml
+
+  when: zabbix_install | bool
+
+
+- include: config.yml
+
+- name: enable and start zabbix_services
+  systemd:
+    name: '{{ item }}'
+    enabled: yes
+    state: started
+  with_items: '{{ zabbix_services }}'

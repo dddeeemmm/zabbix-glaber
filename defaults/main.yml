@@ -1,0 +1,27 @@
+---
+
+zabbix_install: true
+
+zabbix_db_host: ''
+zabbix_dp_port: ''
+zabbix_db_name: ''
+zabbix_db_user: ''
+zabbix_db_password: ''
+zabbix_history_storage_url: ''
+zabbix_history_storage_db_name: ''
+
+zabbix_start_db_syncers: 30
+zabbix_log_file_size: 1024
+zabbix_date_timezone: Europe/Moscow
+zabbix_clickhouse_disable_nanoseconds: 1
+zabbix_clickhouse_preload_values: 8
+zabbix_clickhouse_fill_time: 300
+zabbix_start_pollers_async_snmp: 6
+zabbix_start_pollers_async_agent: 6
+zabbix_start_pingers: 10
+zabbix_start_discoverers: 10
+zabbix_start_pollers_unreachable: 10
+zabbix_start_pollers: 10
+zabbix_cache_size: 226M
+
+nolog: true

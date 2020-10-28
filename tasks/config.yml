@@ -1,0 +1,97 @@
+---
+
+- name: config zabbix server
+  lineinfile:
+    path: /etc/zabbix/zabbix_server.conf
+    regexp: '{{ item.regexp }}'
+    line: '{{ item.line }}'
+  with_items:
+    - { regexp: 'LogFileSize=',                  line: 'LogFileSize={{ zabbix_log_file_size }}'                                   }
+    - { regexp: 'DBHost=',                       line: 'DBHost={{ zabbix_db_host }}'                                              }
+    - { regexp: 'DBPort=',                       line: 'DBPort={{ zabbix_db_port }}'                                              }
+    - { regexp: 'DBUser=',                       line: 'DBUser={{ zabbix_db_user }}'                                              }
+    - { regexp: 'DBPassword=',                   line: 'DBPassword={{ zabbix_db_password }}'                                      }
+    - { regexp: 'HistoryStorageURL=',            line: 'HistoryStorageURL={{ zabbix_history_storage_url }}'                       }
+    - { regexp: 'HistoryStorageTypes=',          line: "HistoryStorageTypes={{ zabbix_history_storage_types | join (',') }}"      }
+    - { regexp: 'HistoryStorageType=',           line: 'HistoryStorageType={{ zabbix_history_storage_type }}'                     }
+    - { regexp: 'HistoryStorageDBName=',         line: 'HistoryStorageDBName={{ zabbix_history_storage_db_name }}'                }
+    - { regexp: 'ClickHouseUsername=',           line: 'ClickHouseUsername={{ zabbix_db_user }}'                                  }
+    - { regexp: 'ClickHousePassword=',           line: 'ClickHousePassword={{ zabbix_db_password }}'                              }
+    - { regexp: 'StartDBSyncers=',               line: 'StartDBSyncers={{ zabbix_start_db_syncers }}'                             }
+    - { regexp: 'ClickHouseDisableNanoseconds=', line: 'ClickHouseDisableNanoseconds={{ zabbix_clickhouse_disable_nanoseconds }}' }
+    - { regexp: 'ClickHousePreloadValues=',      line: 'ClickHousePreloadValues={{ zabbix_clickhouse_preload_values }}'           }
+    - { regexp: 'ClickHouseCacheFillTime=',      line: 'ClickHouseCacheFillTime={{ zabbix_clickhouse_fill_time }}'                }
+    - { regexp: 'Hostname=',                     line: 'Hostname={{ ansible_fqdn }}'                                              }
+    - { regexp: 'ServerID=',                     line: "ServerID={{ inventory_hostname.split ('-') | last }}"                     }
+    - { regexp: 'StartPollersAsyncSNMP=',        line: "StartPollersAsyncSNMP={{ zabbix_start_pollers_async_snmp }}"              }
+    - { regexp: 'StartPollersAsyncAGENT=',       line: "StartPollersAsyncAGENT={{ zabbix_start_pollers_async_agent }}"            }
+#    - { regexp: 'Include=',                      line: "Include={{ zabbix_include }}/*.conf"                                      }
+    - { regexp: 'StartPingers=',                 line: "StartPingers={{ zabbix_start_pingers }}"                                  }
+    - { regexp: 'StartDiscoverers=',             line: "StartDiscoverers={{ zabbix_start_discoverers }}"                          }
+    - { regexp: 'StartPollersUnreachable=',      line: "StartPollersUnreachable={{ zabbix_start_pollers_unreachable }}"           }
+    - { regexp: 'StartPollers=',                 line: "StartPollers={{ zabbix_start_pollers }}"                                  }
+    - { regexp: 'CacheSize=',                    line: "CacheSize={{ zabbix_cache_size }}"                                        }
+  no_log: '{{ nolog }}'
+  register: config_zabbix_server
+
+- name: check php config exists
+  stat:
+    path: /etc/zabbix/web/zabbix.conf.php
+  register: check_php_config_exists
+
+- name: copy sample php config to web
+  copy:
+    src: /usr/share/zabbix/conf/zabbix.conf.php.example
+    dest: /etc/zabbix/web/zabbix.conf.php
+    remote_src: true
+  when: not check_php_config_exists.stat.exists
+
+- name: config zabbix web
+  lineinfile:
+    path: /etc/zabbix/web/zabbix.conf.php
+    regexp: '{{ item.regexp }}'
+    line: '{{ item.line }}'
+  with_items:
+    - { regexp: "DB\\[\\'TYPE\\'\\]",                              line: "$DB['TYPE'] = 'POSTGRESQL';"                                                                                         }
+    - { regexp: "DB\\[\\'SERVER\\'\\]",                            line: "$DB['SERVER'] = '{{ zabbix_db_host }}';"                                                                             }
+    - { regexp: "DB\\[\\'PORT\\'\\]",                              line: "$DB['PORT'] = '{{ zabbix_db_port }}';"                                                                               }
+    - { regexp: "DB\\[\\'DATABASE\\'\\]",                          line: "$DB['DATABASE'] = 'zabbix';"                                                                                         }
+    - { regexp: "DB\\[\\'USER\\'\\]",                              line: "$DB['USER'] = '{{ zabbix_db_user }}';"                                                                               }
+    - { regexp: "DB\\[\\'PASSWORD\\'\\]",                          line: "$DB['PASSWORD'] = '{{ zabbix_db_password }}';"                                                                       }
+    - { regexp: "HISTORY\\[\\'storagetype\\'\\]",                  line: "$HISTORY['storagetype'] = 'clickhouse';"                                                                             }
+    - { regexp: "HISTORY\\[\\'url\\'\\]",                          line: "$HISTORY['url'] = '{{ zabbix_history_storage_url }}/?user={{ zabbix_db_user }}&password={{ zabbix_db_password }}';"  }
+    - { regexp: "HISTORY\\[\\'types\\'\\]",                        line: "$HISTORY['types'] = {{ zabbix_history_storage_types | string }};"                                                           }
+    - { regexp: "HISTORY\\[\\'dbname\\'\\]",                       line: "$HISTORY['dbname'] = '{{ zabbix_history_storage_db_name }}';"                                                        }
+    - { regexp: "HISTORY\\[\\'ClickHouseDisableNanoseconds\\'\\]", line: "$HISTORY['ClickHouseDisableNanoseconds'] = '{{ zabbix_clickhouse_disable_nanoseconds }}';"                           }
+    - { regexp: 'ZBX_SERVER ',                                     line: "$ZBX_SERVER = '{{ ansible_fqdn }}';"                                                                                 }
+    - { regexp: 'ZBX_SERVER_PORT',                                 line: "$ZBX_SERVER_PORT = '10051';"                                                                                         }
+    - { regexp: 'ZBX_SERVER_NAME',                                 line: "$ZBX_SERVER_NAME = '{{ ansible_fqdn }}';"                                                                      }
+  no_log: '{{ nolog }}'
+  register: config_zabbix_web
+
+- name: config php
+  lineinfile:
+    path: /etc/php.ini
+    regexp: ;date.timezone
+    line: date.timezone = {{ zabbix_date_timezone }}
+  register: config_php
+
+- name: restart zabbix-server
+  systemd:
+    name: zabbix-server
+    enabled: yes
+    state: restarted
+  when: config_zabbix_server is changed
+
+- name: restart httpd
+  systemd:
+    name: httpd
+    enabled: yes
+    state: restarted
+  when: config_zabbix_web is changed or config_php is changed
+
+- name: copy external scripts
+  copy:
+    src: '{{ role_path }}/files/externalscripts/'
+    dest: /usr/lib/zabbix/externalscripts/
+    mode: +x

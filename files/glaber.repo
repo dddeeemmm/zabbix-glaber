@@ -1,0 +1,13 @@
+[glaber]
+name=Glaber Official Repository
+baseurl=https://glaber.io/repo/rhel/\$releasever/
+enabled=1
+gpgcheck=0
+repo_gpgcheck=0
+
+[glaber-mirror]
+name=Glaber Repository Mirror (UTG)
+baseurl=https://repo.utelecom.com.ua/rhel/\$releasever/
+enabled=1
+gpgcheck=0
+repo_gpgcheck=0

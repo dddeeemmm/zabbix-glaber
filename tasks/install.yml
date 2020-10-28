@@ -1,0 +1,10 @@
+---
+
+- name: add repo
+  copy:
+    src: glaber.repo
+    dest: /etc/yum.repos.d/glaber.repo
+
+- name: install
+  package:
+    name: '{{ zabbix_packages }}'
